@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="АААААААА" Height="450" Width="800">
     <Grid>
-        <Canvas x:Name="GameCanvas" Background="White"
+        <Canvas x:Name="GameCanvas" Background="Lavender"
                 MouseLeftButtonDown="GameCanvas_MouseLeftButtonDown"/>
 
         <StackPanel Orientation="Horizontal" VerticalAlignment="Top"
