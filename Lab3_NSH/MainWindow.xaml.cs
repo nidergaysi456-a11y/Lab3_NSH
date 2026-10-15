@@ -1,75 +1,80 @@
-﻿using System.Windows;
+﻿using System;
+using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
 
-public partial class MainWindow : Window
+namespace Clicker
 {
-    private CController controller;
-    private DispatcherTimer timer;
-    private CPlayer player;          // игрок (Задание №2)
-    private CooldownTimer cooldown;  // отдельный класс перезарядки
-
-    public MainWindow()
+    public partial class MainWindow : Window
     {
-        InitializeComponent();
+        private CController controller;
+        private CPlayer player;
+        private CooldownTimer cooldown;
+        private DispatcherTimer timer;
 
-        timer = new DispatcherTimer();
-        timer.Interval = new TimeSpan(0, 0, 0, 0, 100); // 100 мс
-        timer.Tick += Timer_Tick;
-    }
-
-    private void StartButton_Click(object sender, RoutedEventArgs e)
-    {
-        GameCanvas.Children.Clear();
-
-        player = new CPlayer();
-        cooldown = new CooldownTimer();
-        controller = new CController(
-            spawnRate: 0.5,
-            startTime: 30,                   // игра длится 30 секунд
-            sceneSize: new Size(GameCanvas.ActualWidth, GameCanvas.ActualHeight)
-        );
-
-        // Передаём Canvas, чтобы контроллер сам добавлял/удалял сферы
-        controller.setCanvas(GameCanvas);
-
-        timer.Start();
-    }
-
-    private void Timer_Tick(object sender, EventArgs e)
-    {
-        // 1. Обновляем контроллер (спавн, время жизни, удаление)
-        controller.update(0.1);
-
-        // 2. Обновляем перезарядку
-        cooldown.update(0.1);
-
-        // 3. Обновляем UI
-        ScoreText.Text = controller.getPoints().ToString("0");
-        TimeText.Text = controller.getRemainingTime().ToString("0.0");
-
-        // 4. Конец игры
-        if (controller.isFinished())
+        public MainWindow()
         {
-            timer.Stop();
-            MessageBox.Show($"Игра окончена! Очки: {controller.getPoints():0}");
+            InitializeComponent();
+
+            this.timer = new DispatcherTimer();
+            this.timer.Interval = new TimeSpan(0, 0, 0, 0, 100);
+            this.timer.Tick += Timer_Tick;
         }
-    }
 
-    private void GameCanvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-    {
-        if (controller == null) return;
+        private void StartButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.GameCanvas.Children.Clear();
 
-        Point mousePos = e.GetPosition(GameCanvas);
+            this.player = new CPlayer();
+            this.cooldown = new CooldownTimer(0.5);
 
-        // Перезарядка: если ещё не готова — игнорируем клик
-        if (!cooldown.isReady())
-            return;
+            Size sceneSize = new Size(this.GameCanvas.ActualWidth,
+                                      this.GameCanvas.ActualHeight);
 
-        // Полиморфный вызов: контроллер сам перебирает List<CCollectable>
-        bool hit = controller.handleClick(player, mousePos);
+            this.controller = new CController(0.5, 30, sceneSize, this.GameCanvas);
 
-        if (hit)
-            cooldown.reset(); // сброс перезарядки после успешного клика
+            this.timer.Start();
+        }
+
+        private void Timer_Tick(object sender, EventArgs e)
+        {
+            if (this.controller == null)
+            {
+                return;
+            }
+
+            this.controller.update(0.1);
+            this.cooldown.update(0.1);
+
+            this.ScoreText.Text = this.controller.getPoints().ToString("0");
+            this.TimeText.Text = this.controller.getRemainingTime().ToString("0.0");
+
+            if (this.controller.isFinished() == true)
+            {
+                this.timer.Stop();
+                MessageBox.Show("Игра окончена! Очки: " + this.controller.getPoints().ToString("0"));
+            }
+        }
+
+        private void GameCanvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (this.controller == null)
+            {
+                return;
+            }
+
+            if (this.cooldown.isReady() == false)
+            {
+                return;
+            }
+
+            Point mousePosition = e.GetPosition(this.GameCanvas);
+            bool hit = this.controller.handleClick(this.player, mousePosition);
+
+            if (hit == true)
+            {
+                this.cooldown.reset();
+            }
+        }
     }
 }
